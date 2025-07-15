@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Untitled Chat</title> <!-- This will be updated by JS -->
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar styles for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a; /* Dark background for track */
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4a4a4a; /* Darker thumb */
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6a6a6a; /* Lighter thumb on hover */
+        }
+
+        /* Apply Inter font globally */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Basic loading spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Theme specific styles */
+        body.dark-theme {
+            background-color: #030712; /* bg-gray-950 */
+            color: #f3f4f6; /* text-gray-100 */
+        }
+
+        body.light-theme {
+            background-color: #f9fafb; /* bg-gray-50 */
+            color: #1f2937; /* text-gray-900 */
+        }
+
+        /* Header background */
+        body.dark-theme .header-bg {
+            background-color: #111827; /* bg-gray-900 */
+        }
+        body.light-theme .header-bg {
+            background-color: #e5e7eb; /* bg-gray-200 */
+        }
+
+        /* Header title color */
+        body.dark-theme .header-title-color {
+            color: #f3f4f6; /* text-gray-100 */
+        }
+        body.light-theme .header-title-color {
+            color: #1f2937; /* text-gray-900 */
+        }
+
+        /* Input field background and text color */
+        body.dark-theme .input-bg {
+            background-color: #1f2937; /* bg-gray-800 */
+            color: #f3f4f6; /* text-gray-100 */
+        }
+        body.light-theme .input-bg {
+            background-color: #d1d5db; /* bg-gray-300 */
+            color: #1f2937; /* text-gray-900 */
+        }
+        body.light-theme .input-bg::placeholder {
+            color: #6b7280; /* placeholder-gray-500 */
+        }
+
+        /* Gemini message bubble background and text color */
+        body.dark-theme .gemini-message-bg {
+            background-color: #1f2937; /* bg-gray-800 */
+            color: #f3f4f6; /* text-gray-100 */
+        }
+        body.light-theme .gemini-message-bg {
+            background-color: #e5e7eb; /* bg-gray-200 */
+            color: #1f2937; /* text-gray-900 */
+        }
+
+        /* User message bubble background and text color */
+        body.dark-theme .user-message-bg {
+            background-color: #2563eb; /* bg-blue-600 */
+            color: #ffffff; /* text-white */
+        }
+        body.light-theme .user-message-bg {
+            background-color: #3b82f6; /* bg-blue-500 */
+            color: #ffffff; /* text-white */
+        }
+
+        /* Button icon color (theme toggle) */
+        body.dark-theme .button-icon-color {
+            color: #9ca3af; /* text-gray-400 */
+        }
+        body.light-theme .button-icon-color {
+            color: #4b5563; /* text-gray-600 */
+        }
+        body.light-theme .hover-bg-gray-800:hover {
+            background-color: #d1d5db; /* bg-gray-300 */
+        }
+
+        /* Markdown specific styles */
+        .markdown-content h1 { font-size: 1.875rem; font-weight: bold; margin-bottom: 0.5rem; } /* text-3xl */
+        .markdown-content h2 { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; } /* text-2xl */
+        .markdown-content h3 { font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; } /* text-xl */
+        .markdown-content p { margin-bottom: 0.5rem; }
+        .markdown-content ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .markdown-content ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+        .markdown-content li { margin-bottom: 0.25rem; }
+        .markdown-content b, .markdown-content strong { font-weight: bold; }
+        .markdown-content i, .markdown-content em { font-style: italic; }
+        .markdown-content a { color: #3b82f6; text-decoration: underline; }
+        .markdown-content pre {
+            background-color: rgba(0, 0, 0, 0.2); /* Slightly transparent black for code blocks */
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 0.875rem;
+            line-height: 1.25;
+            white-space: pre-wrap; /* Ensures text wraps within the pre block */
+            word-wrap: break-word; /* Breaks long words */
+        }
+        body.light-theme .markdown-content pre {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        .markdown-content code:not(pre code) {
+            background-color: rgba(0, 0, 0, 0.1); /* Slightly transparent black for inline code */
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 0.875rem;
+        }
+        body.light-theme .markdown-content code:not(pre code) {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #3b82f6; /* Blue border for blockquotes */
+            padding-left: 1rem;
+            margin-left: 0;
+            margin-bottom: 0.5rem;
+            color: #9ca3af; /* Lighter text for blockquotes */
+        }
+        body.light-theme .markdown-content blockquote {
+            color: #6b7280;
+        }
+        .markdown-content hr {
+            border: none;
+            border-top: 1px solid #4a4a4a; /* Horizontal rule color */
+            margin: 1rem 0;
+        }
+        body.light-theme .markdown-content hr {
+            border-top-color: #d1d5db;
+        }
+
+        /* 401 Unauthorized Screen styles */
+        .unauthorized-screen {
+            position: absolute; /* Position it relative to the nearest positioned ancestor (body) */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0; /* Make it cover the entire viewport */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centers content vertically */
+            align-items: center; /* Centers content horizontally */
+            text-align: center; /* Ensures text inside is centered */
+            background-color: #030712; /* Dark background */
+            color: #f3f4f6; /* Light text */
+            z-index: 1000; /* Ensure it's on top of other content */
+        }
+        .unauthorized-screen h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .unauthorized-screen p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body class="dark-theme h-screen flex overflow-hidden">
+    <!-- Main Chat Area -->
+    <main id="chat-container" class="flex-1 flex flex-col">
+        <!-- Chat Header -->
+        <header id="chat-header" class="header-bg p-4 flex items-center justify-between shadow-md">
+            <h2 id="chat-title" class="text-xl font-semibold header-title-color">Chat</h2>
+            <div id="header-buttons" class="flex items-center space-x-4">
+                <button id="summarize-chat-button" class="px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors text-white text-sm flex items-center gap-1">
+                    ✨ Summarize Chat
+                </button>
+                <button id="end-chat-button" class="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors text-white text-sm flex items-center gap-1">
+                    End Chat
+                </button>
+                <button id="theme-toggle" class="p-2 rounded-full hover-bg-gray-800 transition-colors button-icon-color">
+                    <!-- Sun Icon (default for dark theme) -->
+                    <svg id="sun-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.325 3.325l-.707.707M6.364 6.364l-.707-.707m12.728 0l-.707.707M6.364 17.636l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <!-- Moon Icon (for light theme) -->
+                    <svg id="moon-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Message Display Area -->
+        <div id="chat-messages" class="flex-1 p-6 overflow-y-auto space-y-6">
+            <!-- Initial Gemini Message -->
+        </div>
+
+        <!-- Input Area -->
+        <div id="input-area" class="p-4 header-bg flex items-center gap-2 shadow-inner">
+            <input type="text" id="chat-input" placeholder="Ask me anything ..." class="flex-1 p-3 rounded-lg input-bg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400">
+            <button id="send-button" class="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+        </div>
+    </main>
+
+    <!-- 401 Unauthorized Screen -->
+    <div id="unauthorized-screen" class="unauthorized-screen hidden">
+        <h1>401 Unauthorized</h1>
+        <p>Access Denied. Please ensure you have a valid token.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            const chatMessages = document.getElementById('chat-messages');
+            const summarizeChatButton = document.getElementById('summarize-chat-button');
+            const endChatButton = document.getElementById('end-chat-button');
+            const themeToggle = document.getElementById('theme-toggle');
+            const sunIcon = document.getElementById('sun-icon');
+            const moonIcon = document.getElementById('moon-icon');
+            const body = document.body;
+            const inputArea = document.getElementById('input-area');
+            const headerButtons = document.getElementById('header-buttons');
+            const chatContainer = document.getElementById('chat-container');
+            const unauthorizedScreen = document.getElementById('unauthorized-screen');
+            const chatTitle = document.getElementById('chat-title'); // Get the chat title element
+
+            let chatHistory = [];
+            let isDarkTheme = true;
+            let authToken = null; // Variable to store the authentication token
+
+            // --- Authentication & Title Logic ---
+            const storedToken = sessionStorage.getItem('token');
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlToken = urlParams.get('token');
+            const urlChatTitle = urlParams.get('title'); // Get the title from URL
+
+            if (urlToken) {
+                // If token exists in URL, store it and refresh to clean URL
+                sessionStorage.setItem('token', urlToken);
+                // If title exists in URL, store it too
+                if (urlChatTitle) {
+                    sessionStorage.setItem('chatTitle', urlChatTitle);
+                }
+                // Remove the token and title query parameters and refresh the page
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.location.replace(cleanUrl); // Use replace to avoid back button issues
+                return; // Stop execution to allow refresh
+            } else if (storedToken) {
+                // If token exists in session storage, use it
+                authToken = storedToken;
+                // Set the title from session storage or default to "Untitled Chat"
+                const storedChatTitle = sessionStorage.getItem('chatTitle') || "Untitled Chat";
+                document.title = storedChatTitle;
+                chatTitle.textContent = storedChatTitle;
+                startNewChat(); // Initialize chat UI
+            } else {
+                // If no token in session storage and no token in URL, show 401 screen
+                chatContainer.classList.add('hidden');
+                unauthorizedScreen.classList.remove('hidden');
+                return; // Stop execution
+            }
+
+            // --- Event Listeners ---
+            sendButton.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            summarizeChatButton.addEventListener('click', summarizeChat);
+            endChatButton.addEventListener('click', endChat);
+            themeToggle.addEventListener('click', toggleTheme);
+
+            // --- UI Functions ---
+            function toggleTheme() {
+                isDarkTheme = !isDarkTheme;
+                if (isDarkTheme) {
+                    body.classList.remove('light-theme');
+                    body.classList.add('dark-theme');
+                    sunIcon.style.display = 'block';
+                    moonIcon.style.display = 'none';
+                } else {
+                    body.classList.remove('dark-theme');
+                    body.classList.add('light-theme');
+                    sunIcon.style.display = 'none';
+                    moonIcon.style.display = 'block';
+                }
+            }
+
+            function startNewChat() {
+                chatHistory = [];
+                chatMessages.innerHTML = '';
+                chatInput.value = '';
+                addGeminiMessage("Hello! How can I help you today?");
+
+                // Re-add input area and buttons if they were removed
+                if (!document.getElementById('input-area')) {
+                    document.querySelector('main').appendChild(inputArea); // Re-append input area
+                }
+                if (!document.getElementById('header-buttons')) {
+                    document.getElementById('chat-header').appendChild(headerButtons); // Re-append header buttons
+                }
+            }
+
+            function endChat() {
+                chatHistory = []; // Clear chat history
+                chatMessages.innerHTML = ''; // Clear chat messages from UI
+
+                // Clear all items from session storage
+                sessionStorage.clear();
+
+                // Remove the input area
+                if (inputArea.parentNode) {
+                    inputArea.parentNode.removeChild(inputArea);
+                }
+
+                // Remove header buttons
+                if (headerButtons.parentNode) {
+                    headerButtons.parentNode.removeChild(headerButtons);
+                }
+
+                // Display end conversation message
+                const endMessageDiv = document.createElement('div');
+                endMessageDiv.className = 'flex justify-center items-center h-full text-center text-gray-400';
+                endMessageDiv.innerHTML = `
+                    <div>
+                        <p class="text-xl font-semibold mb-2">Conversation Ended</p>
+                        <p>Thank you for your conversation. You can now close this window.</p>
+                    </div>
+                `;
+                chatMessages.appendChild(endMessageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                // Attempt to close the window after 30 seconds
+                setTimeout(() => {
+                    try {
+                        // Check if the window is not the main browsing window
+                        if (window.opener && !window.opener.closed) {
+                            window.close();
+                        } else {
+                            // For security reasons, browsers often prevent scripts from closing windows
+                            // that were not opened by the script itself.
+                            console.warn("Could not close window automatically. User may need to close it manually.");
+                            // Optionally, add a message to the UI if the window couldn't be closed
+                            const manualCloseMessage = document.createElement('div');
+                            manualCloseMessage.className = 'flex justify-center items-center text-center text-gray-400 mt-4';
+                            manualCloseMessage.innerHTML = `<p class="text-sm">If the window did not close automatically, please close it manually.</p>`;
+                            chatMessages.appendChild(manualCloseMessage);
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
+                    } catch (e) {
+                        console.error("Error attempting to close window:", e);
+                        const manualCloseMessage = document.createElement('div');
+                        manualCloseMessage.className = 'flex justify-center items-center text-center text-gray-400 mt-4';
+                        manualCloseMessage.innerHTML = `<p class="text-sm">An error occurred while trying to close the window. Please close it manually.</p>`;
+                        chatMessages.appendChild(manualCloseMessage);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                }, 30000); // 30 seconds
+            }
+
+            async function sendMessage() {
+                const messageText = chatInput.value.trim();
+                if (messageText === '') return;
+
+                // Add user message to UI
+                addUserMessage(messageText);
+                chatInput.value = ''; // Clear input
+
+                // Add user message to chat history
+                chatHistory.push({ role: "user", parts: [{ text: messageText }] });
+
+                // Show loading indicator
+                const loadingDiv = addGeminiLoadingIndicator();
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                try {
+                    const apiUrl = `https://socremus.cchandra.workers.dev/v1/chat/continue`;
+
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (authToken) {
+                        headers['Authorization'] = `Bearer ${authToken}`;
+                    }
+
+                    const payload = {
+                        contents: chatHistory
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    // Remove loading indicator
+                    loadingDiv.remove();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const geminiResponseText = result.candidates[0].content.parts[0].text;
+                        addGeminiMessage(geminiResponseText);
+                        chatHistory.push({ role: "model", parts: [{ text: geminiResponseText }] });
+                    } else {
+                        addGeminiMessage("Error: Could not get a response from LLM. Please try again.");
+                        console.error("LLM API response structure unexpected:", result);
+                    }
+                } catch (error) {
+                    // Remove loading indicator
+                    loadingDiv.remove();
+                    addGeminiMessage("Error: Failed to connect to LLM API. Please check your network or try again later.");
+                    console.error("Error calling LLM API:", error);
+                } finally {
+                    chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom after response or error
+                }
+            }
+
+            async function summarizeChat() {
+                if (chatHistory.length === 0) {
+                    addGeminiMessage("There's no conversation to summarize yet. Start chatting!");
+                    return;
+                }
+
+                // Create a prompt for summarization
+                const summaryPrompt = "Please provide a concise summary of the following conversation:\n\n" +
+                                     chatHistory.map(msg => `${msg.role === 'user' ? 'User' : 'Gemini'}: ${msg.parts[0].text}`).join('\n');
+
+                // Add a temporary user message for the summary request
+                addUserMessage("Please summarize our conversation.");
+                chatHistory.push({ role: "user", parts: [{ text: "Please summarize our conversation." }] });
+
+                // Show loading indicator
+                const loadingDiv = addGeminiLoadingIndicator();
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                try {
+                    const apiUrl = `https://socremus.cchandra.workers.dev/v1/chat/continue`;
+
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (authToken) {
+                        headers['Authorization'] = `Bearer ${authToken}`;
+                    }
+
+                    const payload = {
+                        contents: [{ role: "user", parts: [{ text: summaryPrompt }] }]
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    loadingDiv.remove();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const summaryText = result.candidates[0].content.parts[0].text;
+                        addGeminiMessage("✨ Here's a summary of our chat:\n\n" + summaryText);
+                        chatHistory.push({ role: "model", parts: [{ text: "Here's a summary of our chat:\n\n" + summaryText }] });
+                    } else {
+                        addGeminiMessage("Error: Could not generate summary. Please try again.");
+                        console.error("LLM API response structure unexpected for summary:", result);
+                    }
+                } catch (error) {
+                    loadingDiv.remove();
+                    addGeminiMessage("Error: Failed to summarize chat. Please try again later.");
+                    console.error("Error calling LLM API for summary:", error);
+                } finally {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }
+
+            function addUserMessage(text) {
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.className = 'flex justify-end';
+                userMessageDiv.innerHTML = `
+                    <div class="user-message-bg p-3 rounded-lg max-w-xl shadow-md">
+                        ${text}
+                    </div>
+                `;
+                chatMessages.appendChild(userMessageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function addGeminiMessage(text) {
+                const geminiMessageDiv = document.createElement('div');
+                geminiMessageDiv.className = 'flex justify-start';
+
+                let formattedText = text;
+
+                // 1. Code blocks (```language\ncode\n```)
+                formattedText = formattedText.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+                    return `<pre><code class="language-${lang || ''}">${code.trim()}</code></pre>`;
+                });
+
+                // 2. Headings
+                formattedText = formattedText.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+                formattedText = formattedText.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+                formattedText = formattedText.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+
+                // 3. Blockquotes
+                formattedText = formattedText.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
+
+                // 4. Horizontal Rules
+                formattedText = formattedText.replace(/^-{3,}\s*$/gm, '<hr>');
+
+                // 5. Lists (unordered and ordered) - more robust handling
+                // Temporary placeholders for list items to avoid interference with other markdown
+                formattedText = formattedText.replace(/^\s*(\*|\-)\s+(.*)/gm, '::UL_ITEM::$2');
+                formattedText = formattedText.replace(/^\s*(\d+)\.\s+(.*)/gm, '::OL_ITEM::$2');
+
+                // 6. Inline code (`code`)
+                formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+                // 7. Bold (**text** or __text__)
+                formattedText = formattedText.replace(/(\*\*|__)(.*?)\1/g, '<b>$2</b>');
+
+                // 8. Italics (*text* or _text_)
+                formattedText = formattedText.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>');
+
+                // 9. Links ([text](url))
+                formattedText = formattedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+                // 10. Convert remaining newlines to <br> (only if not inside pre/code blocks)
+                // This is tricky with regex. A simpler approach is to replace newlines not preceded by a closing tag or followed by an opening tag.
+                // For simplicity, we'll convert all remaining newlines to <br> after block-level parsing.
+                formattedText = formattedText.replace(/\n/g, '<br>');
+
+                // Replace placeholders with actual list tags
+                formattedText = formattedText.replace(/::UL_ITEM::(.*?)(<br>|$)/g, '<li>$1</li>');
+                formattedText = formattedText.replace(/::OL_ITEM::(.*?)(<br>|$)/g, '<li>$1</li>');
+
+                // Wrap consecutive list items in ul/ol tags
+                formattedText = formattedText.replace(/(<li>.*?<\/li>(<br>)?)+/g, (match) => {
+                    if (match.startsWith('<li>')) {
+                        return `<ul>${match.replace(/<br>/g, '')}</ul>`;
+                    }
+                    return match;
+                });
+                // This list wrapping logic is still basic and might not handle mixed lists or complex nested structures perfectly.
+                // A full Markdown parser library would be needed for robust handling.
+
+                // Ensure paragraphs are wrapped. This is a very basic attempt and might need more sophistication.
+                // If the text doesn't start with a block-level tag, wrap it in a paragraph.
+                if (!formattedText.match(/^(<h|<ul|<ol|<pre|<blockquote|<hr)/i)) {
+                     formattedText = `<p>${formattedText}</p>`;
+                }
+                // Remove any stray <br> tags that might have been added at the end of lists or other block elements
+                formattedText = formattedText.replace(/(<\/li>|<pre><code>.*?<\/code><\/pre>|<br>)\s*<br>/g, '$1');
+
+
+                geminiMessageDiv.innerHTML = `
+                    <div class="gemini-message-bg p-3 rounded-lg max-w-xl shadow-md markdown-content">
+                        ${formattedText}
+                    </div>
+                `;
+                chatMessages.appendChild(geminiMessageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function addGeminiLoadingIndicator() {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'flex justify-start';
+                loadingDiv.innerHTML = `
+                    <div class="gemini-message-bg p-3 rounded-lg max-w-xl shadow-md flex items-center space-x-2">
+                        <div class="spinner"></div>
+                        <span>I am thinking...</span>
+                    </div>
+                `;
+                chatMessages.appendChild(loadingDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                return loadingDiv;
+            }
+        });
+    </script>
+</body>
+</html>
